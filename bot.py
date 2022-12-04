@@ -25,7 +25,15 @@ async def on_ready():
 # create entry for user info in db
 @bot.event
 async def on_member_join(member):
-    pass
+    user_info = {
+        "name":member.name,
+        "discriminator":member.discriminator,
+        "discord_id":member.id
+    }
+    if db.add_user(user_info):
+        print(f"Added {member.name}'s info to the database")
+    else:
+        print("User already exists")
 
 # update user info in db
 @bot.event
@@ -41,6 +49,7 @@ async def on_member_remove(member):
 async def boop(ctx):
     await ctx.send("Boop!")
 
+# add a class
 @bot.command()
 async def add_class(ctx):
     class_info = {
@@ -106,7 +115,7 @@ async def add_class(ctx):
     except asyncio.TimeoutError:
         await ctx.send("Sorry, you did not reply in time")
 
-    if db.add_class(ctx.author.id, class_info) == True:
+    if db.add_class(ctx.author.id, class_info):
         await ctx.send("Class added successfully")
     else:
         await ctx.send("Failed to add class")
