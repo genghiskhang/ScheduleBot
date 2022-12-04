@@ -39,12 +39,23 @@ async def all_members(ctx):
             members += f"{member.name}#{member.discriminator} - {member.id} - is_bot:{member.bot}\n"
         embed.description = members
         await ctx.send(embed=embed)
+    else:
+        await ctx.send("You do not have permissions to use this command")
 
 # (ADMIN) add all users info to db
 @bot.command()
 async def add_all_users(ctx):
     if ctx.author.guild_permissions.administrator:
-        pass
+        for member in ctx.channel.guild.members:
+            if not member.bot:
+                user_info = {
+                    "name":member.name,
+                    "discriminator":member.discriminator,
+                    "discord_id":member.id
+                }
+                db.add_user(user_info)
+    else:
+        await ctx.send("You do not have permissions to use this command")
 
 # create entry for user info in db
 @bot.event
