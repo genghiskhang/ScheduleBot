@@ -26,6 +26,26 @@ async def on_ready():
 async def boop(ctx):
     await ctx.send("Boop!")
 
+# (ADMIN) display all users
+@bot.command()
+async def all_members(ctx):
+    if ctx.author.guild_permissions.administrator:
+        embed = discord.Embed(
+            color = discord.Color.fuchsia()
+        )
+        embed.title = "Members List"
+        members = ""
+        for member in ctx.channel.guild.members:
+            members += f"{member.name}#{member.discriminator} - {member.id} - is_bot:{member.bot}\n"
+        embed.description = members
+        await ctx.send(embed=embed)
+
+# (ADMIN) add all users info to db
+@bot.command()
+async def add_all_users(ctx):
+    if ctx.author.guild_permissions.administrator:
+        pass
+
 # create entry for user info in db
 @bot.event
 async def on_member_join(member):
@@ -115,7 +135,7 @@ async def add_class(ctx):
         await ctx.send("What days of the week do you have the class?")
         await ctx.send("Enter from [MON,TUE,WED,THU,FRI] no duplicates or spaces, in-order (i.e. MONWEDFRI)")
         msg = await bot.wait_for("message", check=lambda m:days_of_week_check(m) and user_check(m), timeout=30)
-        class_info["days_of_week"] = msg.content
+        class_info["days_of_week"] = " ".join([j.title() for j in [msg.content[i:i + 3] for i in range(0, len(msg.content), 3)]])
 
         # time
         time = ""
@@ -145,5 +165,15 @@ async def add_class(ctx):
         await ctx.send("Class added successfully")
     else:
         await ctx.send("Failed to add class")
+
+# remove a class
+@bot.command()
+async def remove_class(ctx):
+    pass
+
+# update a class
+@bot.command()
+async def update_class(ctx):
+    pass
 
 bot.run(token)
