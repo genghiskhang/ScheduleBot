@@ -22,6 +22,10 @@ async def on_ready():
         "                                       /\___/  \n"+
         "                                       \/__/   \n")
 
+@bot.command()
+async def boop(ctx):
+    await ctx.send("Boop!")
+
 # create entry for user info in db
 @bot.event
 async def on_member_join(member):
@@ -45,9 +49,31 @@ async def on_member_update(member):
 async def on_member_remove(member):
     pass
 
+# display classes
 @bot.command()
-async def boop(ctx):
-    await ctx.send("Boop!")
+async def classes(ctx):
+    class_list = []
+    for entry in db.get_all_classes(ctx.author.id):
+        class_info = {
+            "course_id":entry[1],
+            "course_name":entry[2],
+            "days_of_week":entry[3],
+            "time":entry[4],
+            "location":entry[5],
+            "professor":entry[6]
+        }
+        class_list.append(class_info)
+    for each_class in class_list:
+        embed = discord.Embed(
+            color = discord.Color.fuchsia()
+        )
+        embed.title = each_class["course_name"]
+        # embed.set_thumbnail(url = Path("assets/") / "thumbnail.png")
+        embed.add_field(name = "Course ID", value = each_class["course_id"])
+        embed.add_field(name = "Days", value = each_class["days_of_week"])
+        embed.add_field(name = "Time", value = each_class["time"])
+        embed.add_field(name = "Location", value = each_class["location"])
+        await ctx.send(embed = embed)
 
 # add a class
 @bot.command()

@@ -40,3 +40,8 @@ def add_class(discord_id, class_info):
         return True
     else:
         return False
+
+# gets all classes a user has
+def get_all_classes(discord_id):
+    cursor.execute(f"SELECT * FROM schedules WHERE discord_id IN (SELECT discord_id FROM users WHERE discord_id = {discord_id})")
+    return cursor.fetchall()
