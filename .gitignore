@@ -1,0 +1,4 @@
+assets/token.txt
+assets/dbcredentials.json
+__pycache__
+userinfodb.py
