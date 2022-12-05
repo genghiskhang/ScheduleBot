@@ -54,3 +54,13 @@ def remove_class(discord_id, course_id):
         return True
     else:
         return False
+
+# get schedules table columns
+def get_table_columns(table_name):
+    cursor.execute(f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'schedulebot' AND TABLE_NAME = '{table_name}' ORDER BY ORDINAL_POSITION")
+    return cursor.fetchall()
+
+# update a class entry already existing in schedules table
+def update_class(discord_id, course_id, column_name, column_value):
+    cursor.execute(f"UPDATE schedules SET {column_name} = '{column_value}' WHERE discord_id = {discord_id} AND course_id = '{course_id}'")
+    schedulebotdb.commit()

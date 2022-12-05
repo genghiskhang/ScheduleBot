@@ -214,6 +214,65 @@ async def remove_class(ctx):
 # update a class
 @bot.command()
 async def update_class(ctx):
-    pass
+    courses = [entry[1] for entry in db.get_all_classes(ctx.author.id)]
+    schedule_columns = [column[0] for column in db.get_table_columns("schedules")[1:]]
+
+    if not courses:
+        await ctx.send("You have no courses in your schedule")
+        return
+
+    def user_check(m):
+        return m.author == ctx.author
+
+    def course_id_check(m):
+        return m.content in courses
+
+    def column_check(m):
+        return m.content in schedule_columns
+
+    def column_value_check(m, column_name):
+        if column_name == "course_id":
+            return re.search("^[A-Z]{0,4}\d{3}$", m.content) is not None
+        elif column_name == "days_of_week":
+            return re.search("^(MON)?(TUE)?(WED)?(THU)?(FRI)?$", m.content) is not None
+        elif column_name == "time":
+            return re.search("^(0?[1-9]|1[0-2]):[0-5][0-9][A|P]M-(0?[1-9]|1[0-2]):[0-5][0-9][A|P]M$", m.content) is not None
+        else:
+            return True
+    try:
+        embed = discord.Embed(
+            color = discord.Color.fuchsia()
+        )
+        embed.title = f"{ctx.author.name} enter the course ID you would like to edit"
+        embed.description = "\n".join(courses)
+        await ctx.send(embed = embed)
+        course_id = await bot.wait_for("message", check=lambda m:course_id_check(m) and user_check(m), timeout=20)
+        
+        embed = discord.Embed(
+            color = discord.Color.fuchsia()
+        )
+        embed.title = "Which column would you like to update"
+        embed.description = "\n".join(schedule_columns)
+        await ctx.send(embed = embed)
+        column_name = await bot.wait_for("message", check=lambda m:column_check(m) and user_check(m), timeout=20)
+
+        embed = discord.Embed(
+            color = discord.Color.fuchsia()
+        )
+        embed.title = "What is the new column value"
+        embed.description = f"Old column value: {db.get_all_classes(ctx.author.id)[courses.index(course_id.content)][schedule_columns.index(column_name.content) + 1]}"
+        if column_name.content == "course_id":
+            embed.description += "\n\nXXXXNNN Up to 4 capital characters and exactly 3 numbers (i.e. CMSC202)"
+        elif column_name.content == "days_of_week":
+            embed.description += "\n\nEnter from [MON,TUE,WED,THU,FRI] no duplicates or spaces, in-order (i.e. MONWEDFRI)"
+        elif column_name.content == "time":
+            embed.description += "\n\nHH:MM(AM/PM)-HH:MM(AM/PM)]"
+        await ctx.send(embed = embed)
+        column_value = await bot.wait_for("message", check=lambda m:column_value_check(m, column_name.content) and user_check(m), timeout=20)
+
+        db.update_class(ctx.author.id, course_id.content, column_name.content, column_value.content)
+        await ctx.send(f"Successfully updated the '{column_name.content}' column with the new value")
+    except asyncio.TimeoutError:
+        await ctx.send("Sorry, you did not reply in time")
 
 bot.run(token)
