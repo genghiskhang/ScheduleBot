@@ -139,7 +139,7 @@ async def add_class(ctx):
         await ctx.send("What is the name of the course?")
         msg = await bot.wait_for("message", check=user_check, timeout=20)
         class_info["course_name"] = msg.content
-
+        
         full_day = {
             "MON":"Monday",
             "TUE":"Tuesday",
@@ -186,7 +186,30 @@ async def add_class(ctx):
 # remove a class
 @bot.command()
 async def remove_class(ctx):
-    pass
+    courses = [entry[1] for entry in db.get_all_classes(ctx.author.id)]
+
+    if not courses:
+        await ctx.send("You have no courses in your schedule")
+        return
+
+    embed = discord.Embed(
+        color = discord.Color.fuchsia()
+    )
+    embed.title = f"{ctx.author.name}, enter the course ID you want to remove"
+    embed.description = "\n".join(courses)
+    await ctx.send(embed = embed)
+
+    def check(m):
+        return m.content in courses and m.author == ctx.author
+
+    try:
+        msg = await bot.wait_for("message", check=check, timeout=20)
+        if db.remove_class(ctx.author.id, msg.content):
+            await ctx.send(f"{msg.content} has been removed")
+        else:
+            await ctx.send(f"Failed to remove {msg.content}")
+    except asyncio.TimeoutError:
+        await ctx.send("Sorry, you did not reply in time")
 
 # update a class
 @bot.command()

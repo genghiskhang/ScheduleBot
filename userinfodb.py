@@ -28,13 +28,13 @@ def add_user(user_info):
         return False
 
 # check existing class in schedules table
-def is_duplicate_class(discord_id, course_id):
+def class_exists(discord_id, course_id):
     cursor.execute(f"SELECT * FROM schedules WHERE discord_id = {discord_id} AND course_id = '{course_id}'")
-    return len(cursor.fetchall()) > 0
+    return len(cursor.fetchall()) != 0
 
 # add class info to schedules table
 def add_class(discord_id, class_info):
-    if not is_duplicate_class(discord_id, class_info["course_id"]):
+    if not class_exists(discord_id, class_info["course_id"]):
         cursor.execute(f"INSERT INTO schedules VALUES({discord_id}, '{class_info['course_id']}', '{class_info['course_name']}', '{class_info['days_of_week']}', '{class_info['time']}', '{class_info['location']}', '{class_info['professor']}')")
         schedulebotdb.commit()
         return True
@@ -45,3 +45,12 @@ def add_class(discord_id, class_info):
 def get_all_classes(discord_id):
     cursor.execute(f"SELECT * FROM schedules WHERE discord_id IN (SELECT discord_id FROM users WHERE discord_id = {discord_id})")
     return cursor.fetchall()
+
+# remove a class from schedules table
+def remove_class(discord_id, course_id):
+    if class_exists(discord_id, course_id):
+        cursor.execute(f"DELETE FROM schedules WHERE course_id = '{course_id}' AND discord_id = {discord_id}")
+        schedulebotdb.commit()
+        return True
+    else:
+        return False
