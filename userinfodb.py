@@ -31,7 +31,7 @@ database
 """
 def add_user(user_info):
     if not is_duplicate_user(user_info["discord_id"]):
-        cursor.execute(f"INSERT INTO users VALUES('{user_info['name']}', {user_info['discriminator']}, {user_info['discord_id']})")
+        cursor.execute(f"INSERT INTO users VALUES('{user_info['name']}', {user_info['discriminator']}, {user_info['discord_id']}, {user_info['max_courses']})")
         schedulebotdb.commit()
         return True
     else:
@@ -113,3 +113,25 @@ course
 def update_course(discord_id, course_id, column_name, column_value):
     cursor.execute(f"UPDATE schedules SET {column_name} = '{column_value}' WHERE discord_id = {discord_id} AND course_id = '{course_id}'")
     schedulebotdb.commit()
+
+"""
+get_max_courses
+
+Get a user's max courses
+"""
+def get_max_courses(discord_id):
+    cursor.execute(f"SELECT max_courses FROM users WHERE discord_id = {discord_id}")
+    return cursor.fetchall()[0][0]
+
+"""
+update_max_courses
+
+Updates a user's max courses
+"""
+def update_max_courses(discord_id, new_max):
+    if new_max > 0:
+        cursor.execute(f"UPDATE users SET max_courses = {new_max} WHERE discord_id = {discord_id}")
+        schedulebotdb.commit()
+        return True
+    else:
+        return False

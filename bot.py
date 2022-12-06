@@ -10,6 +10,8 @@ token = open(Path("assets/") / "token.txt", "r").readline().strip()
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 
+MAX_COURSES = 5
+
 """
 Event
 on_ready
@@ -40,7 +42,8 @@ async def on_member_join(member):
     user_info = {
         "name":member.name,
         "discriminator":member.discriminator,
-        "discord_id":member.id
+        "discord_id":member.id,
+        "max_courses":MAX_COURSES
     }
     db.add_user(user_info)
 
@@ -114,6 +117,29 @@ async def add_all_users(ctx):
         await ctx.send("You do not have permissions to use this command")
 
 """
+Command [ADMIN]
+update_max_courses
+
+Updates a user's max courses
+"""
+@bot.command()
+async def update_max_courses(ctx, user:discord.Member):
+
+    def user_check(m):
+        return ctx.author == m.author
+
+    try:
+        await ctx.send(f"What do you want to set the new max courses to")
+        msg = await bot.wait_for("message", check=user_check, timeout=30)
+
+        if db.update_max_courses(user.id, int(msg.content)):
+            await ctx.send(f"{user.name}'s max courses set to {msg.content}")
+        else:
+            await ctx.send("Please enter a valid max courses")
+    except asyncio.TimeoutError:
+        await ctx.send("Sorry, you did not reply in time")
+
+"""
 Command
 show_courses
 
@@ -150,6 +176,10 @@ course to the database
 """
 @bot.command()
 async def add_course(ctx):
+    if len(db.get_all_courses_info(ctx.author.id)) == MAX_COURSES:
+        await ctx.send("You have reached the max amount of courses you can add\nContact vietcoffee#9511 if you need to increase your max courses")
+        return
+
     course_info = {
         "course_id":"",
         "course_name":"",
