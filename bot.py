@@ -10,6 +10,12 @@ token = open(Path("assets/") / "token.txt", "r").readline().strip()
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 
+"""
+Event
+on_ready
+
+Bot initialization
+"""
 @bot.event
 async def on_ready():
     print(" ____                        __              \n"+
@@ -22,7 +28,13 @@ async def on_ready():
         "                                       /\___/  \n"+
         "                                       \/__/   \n")
 
-# create entry for user info in db
+"""
+Event
+on_member_join
+
+Adds the info of the user that
+joined to the database
+"""
 @bot.event
 async def on_member_join(member):
     user_info = {
@@ -30,43 +42,62 @@ async def on_member_join(member):
         "discriminator":member.discriminator,
         "discord_id":member.id
     }
-    if db.add_user(user_info):
-        print(f"Added {member.name}'s info to the database")
-    else:
-        print("User already exists")
+    db.add_user(user_info)
 
-# update user info in db
+"""
+Event
+on_member_update
+"""
 @bot.event
 async def on_member_update(member):
     pass
 
-# idfk yet, delete user info?
+"""
+Event
+on_member_remove
+"""
 @bot.event
 async def on_member_remove(member):
     pass
 
-# test command
+"""
+Command
+boop
+
+Used for testing
+"""
 @bot.command()
 async def boop(ctx):
     await ctx.send("Boop!")
 
-# (ADMIN) display all users
+"""
+Command [ADMIN]
+show_all_members
+
+Displays the name and user id
+of every member in the server
+"""
 @bot.command()
-async def all_members(ctx):
+async def show_all_members(ctx):
     if ctx.author.guild_permissions.administrator:
+        members = "\n".join([f"{member.name}#{member.discriminator} - {member.id} - is_bot:{member.bot}" for member in ctx.channel.guild.members])
         embed = discord.Embed(
+            title = "Members List",
+            description = members,
             color = discord.Color.fuchsia()
         )
-        embed.title = "Members List"
-        members = ""
-        for member in ctx.channel.guild.members:
-            members += f"{member.name}#{member.discriminator} - {member.id} - is_bot:{member.bot}\n"
-        embed.description = members
         await ctx.send(embed=embed)
     else:
         await ctx.send("You do not have permissions to use this command")
 
-# (ADMIN) add all users info to db
+"""
+Command [ADMIN]
+add_all_users
+
+Adds the info of all the current
+members to the database if not
+already in there
+"""
 @bot.command()
 async def add_all_users(ctx):
     if ctx.author.guild_permissions.administrator:
@@ -82,32 +113,44 @@ async def add_all_users(ctx):
     else:
         await ctx.send("You do not have permissions to use this command")
 
-# display classes
+"""
+Command
+show_courses
+
+Displays the all the courses
+a user has
+"""
 @bot.command()
-async def show_classes(ctx):
-    class_list = []
+async def show_courses(ctx):
+    courses = [course_info["course_id"] for course_info in db.get_all_courses_info(ctx.author.id)]
+
+    if not courses:
+        await ctx.send("You have no courses in your schedule")
+        return
+
     embed = discord.Embed(
+        title = f"{ctx.author.name}'s Schedule",
         color = discord.Color.blue()
     )
-    embed.title = f"{ctx.author.name}'s Schedule"
-    for entry in db.get_all_classes(ctx.author.id):
-        class_info = {
-            "course_id":entry[1],
-            "course_name":entry[2],
-            "days_of_week":entry[3],
-            "time":entry[4],
-            "location":entry[5],
-            "professor":entry[6]
-        }
-        class_list.append(class_info)
-    for each_class in class_list:
-        embed.add_field(name = f"{each_class['course_id']} - {each_class['course_name']} with {each_class['professor']}", value = f"{each_class['days_of_week']}\n{each_class['time']} in {each_class['location']}", inline = False)
+    for course_info in db.get_all_courses_info(ctx.author.id):
+        embed.add_field(
+            name = f"{course_info['course_id']} - {course_info['course_name']} with {course_info['professor']}",
+            value = f"{course_info['days_of_week']}\n{course_info['time']} in {course_info['location']}",
+            inline = False
+        )
     await ctx.author.send(embed = embed)
 
-# add a class
+"""
+Command
+add_course
+
+Prompts the user for inputs
+about course info and adds the
+course to the database
+"""
 @bot.command()
-async def add_class(ctx):
-    class_info = {
+async def add_course(ctx):
+    course_info = {
         "course_id":"",
         "course_name":"",
         "days_of_week":"",
@@ -120,26 +163,26 @@ async def add_class(ctx):
         return ctx.author == m.author
 
     def course_id_check(m):
-        return re.search("^[A-Z]{0,4}\d{3}$", m.content) is not None
+        return re.search("^[A-Z]{2,4}\d{3}$", m.content) is not None
 
     def days_of_week_check(m):
         return re.search("^(MON)?(TUE)?(WED)?(THU)?(FRI)?$", m.content) is not None
 
     def time_check(m):
-        return re.search("^(0?[1-9]|1[0-2]):[0-5][0-9][A|P]M$", m.content) is not None
+        return re.search("^(0?[1-9]|1[0-2]):[0-5][0-9][Aa|Pp][Mm]$", m.content) is not None
 
     try:
         # course_id
-        await ctx.send("What is the course ID?")
-        await ctx.send("XXXXNNN Up to 4 capital characters and exactly 3 numbers (i.e. CMSC202)")
-        msg = await bot.wait_for("message", check=lambda m:course_id_check(m) and user_check(m), timeout=20)
-        class_info["course_id"] = msg.content
+        await ctx.send("What is the course ID?\nXXXXNNN (i.e. CMSC202)")
+        msg = await bot.wait_for("message", check=lambda m:course_id_check(m) and user_check(m), timeout=30)
+        course_info["course_id"] = msg.content
 
         # course_name
         await ctx.send("What is the name of the course?")
-        msg = await bot.wait_for("message", check=user_check, timeout=20)
-        class_info["course_name"] = msg.content
+        msg = await bot.wait_for("message", check=user_check, timeout=30)
+        course_info["course_name"] = msg.content
         
+        # days_of_week
         full_day = {
             "MON":"Monday",
             "TUE":"Tuesday",
@@ -147,46 +190,48 @@ async def add_class(ctx):
             "THU":"Thursday",
             "FRI":"Friday"
         }
-
-        # days_of_week
-        await ctx.send("What days of the week do you have the class?")
-        await ctx.send("Enter from [MON,TUE,WED,THU,FRI] no duplicates or spaces, in-order (i.e. MONWEDFRI)")
-        msg = await bot.wait_for("message", check=lambda m:days_of_week_check(m) and user_check(m), timeout=20)
-        class_info["days_of_week"] = ' '.join([full_day[j] for j in [msg.content[i:i + 3] for i in range(0, len(msg.content), 3)]])
+        await ctx.send("What days of the week do you have the course?\nEnter from [MON,TUE,WED,THU,FRI] no duplicates or spaces, in-order (i.e. MONWEDFRI)")
+        msg = await bot.wait_for("message", check=lambda m:days_of_week_check(m) and user_check(m), timeout=30)
+        course_info["days_of_week"] = ' '.join([full_day[j] for j in [msg.content[i:i + 3] for i in range(0, len(msg.content), 3)]])
 
         # time
         time = ""
-        await ctx.send("What is the start time of the class?")
-        await ctx.send("HH:MM and AM/PM (i.e. 11:30AM)")
-        msg = await bot.wait_for("message", check=lambda m:time_check(m) and user_check(m), timeout=20)
+        await ctx.send("What is the start time of the course?\nHH:MM(AM/PM) (i.e. 11:30AM)")
+        msg = await bot.wait_for("message", check=lambda m:time_check(m) and user_check(m), timeout=30)
         time += msg.content + "-"
-        await ctx.send("What is the end time of the class?")
-        await ctx.send("HH:MM and AM/PM (i.e. 12:45PM)")
-        msg = await bot.wait_for("message", check=lambda m:time_check(m) and user_check(m), timeout=20)
+        await ctx.send("What is the end time of the course?\nHH:MM(AM/PM) (i.e. 11:30AM)")
+        msg = await bot.wait_for("message", check=lambda m:time_check(m) and user_check(m), timeout=30)
         time += msg.content
-        class_info["time"] = time
+        course_info["time"] = time.upper()
 
         # location
-        await ctx.send("Where is the class located?")
-        msg = await bot.wait_for("message", check=user_check, timeout=20)
-        class_info["location"] = msg.content
+        await ctx.send("Where is the course located?")
+        msg = await bot.wait_for("message", check=user_check, timeout=30)
+        course_info["location"] = msg.content
 
         # professor
         await ctx.send("What is the name of the professor?")
-        msg = await bot.wait_for("message", check=user_check, timeout=20)
-        class_info["professor"] = msg.content
+        msg = await bot.wait_for("message", check=user_check, timeout=30)
+        course_info["professor"] = msg.content
 
-        if db.add_class(ctx.author.id, class_info):
-            await ctx.send("Class added successfully")
+        if db.add_course(ctx.author.id, course_info):
+            await ctx.send("Course added successfully")
         else:
-            await ctx.send("Failed to add class")
+            await ctx.send("Failed to add course")
     except asyncio.TimeoutError:
         await ctx.send("Sorry, you did not reply in time")
 
-# remove a class
+"""
+Command
+remove_course
+
+Prompts the user to select
+the course they would like 
+to remove
+"""
 @bot.command()
-async def remove_class(ctx):
-    courses = [entry[1] for entry in db.get_all_classes(ctx.author.id)]
+async def remove_course(ctx):
+    courses = [course_info["course_id"] for course_info in db.get_all_courses_info(ctx.author.id)]
 
     if not courses:
         await ctx.send("You have no courses in your schedule")
@@ -203,19 +248,26 @@ async def remove_class(ctx):
         return m.content in courses and m.author == ctx.author
 
     try:
-        msg = await bot.wait_for("message", check=check, timeout=20)
-        if db.remove_class(ctx.author.id, msg.content):
+        msg = await bot.wait_for("message", check=check, timeout=30)
+        if db.remove_course(ctx.author.id, msg.content):
             await ctx.send(f"{msg.content} has been removed")
         else:
             await ctx.send(f"Failed to remove {msg.content}")
     except asyncio.TimeoutError:
         await ctx.send("Sorry, you did not reply in time")
 
-# update a class
+"""
+Command
+update_course
+
+Prompts the user to select a course
+to update and what column of info
+they would like to update
+"""
 @bot.command()
-async def update_class(ctx):
-    courses = [entry[1] for entry in db.get_all_classes(ctx.author.id)]
-    schedule_columns = [column[0] for column in db.get_table_columns("schedules")[1:]]
+async def update_course(ctx):
+    courses = [course_info["course_id"] for course_info in db.get_all_courses_info(ctx.author.id)]
+    schedule_columns = [column[0] for column in db.get_table_columns("schedules")]
 
     if not courses:
         await ctx.send("You have no courses in your schedule")
@@ -232,45 +284,45 @@ async def update_class(ctx):
 
     def column_value_check(m, column_name):
         if column_name == "course_id":
-            return re.search("^[A-Z]{0,4}\d{3}$", m.content) is not None
+            return re.search("^[A-Z]{2,4}\d{3}$", m.content) is not None
         elif column_name == "days_of_week":
             return re.search("^(MON)?(TUE)?(WED)?(THU)?(FRI)?$", m.content) is not None
         elif column_name == "time":
-            return re.search("^(0?[1-9]|1[0-2]):[0-5][0-9][A|P]M-(0?[1-9]|1[0-2]):[0-5][0-9][A|P]M$", m.content) is not None
+            return re.search("^(0?[1-9]|1[0-2]):[0-5][0-9][Aa|Pp][Mm]-(0?[1-9]|1[0-2]):[0-5][0-9][Aa|Pp][Mm]$", m.content) is not None
         else:
             return True
     try:
         embed = discord.Embed(
+            title = "Enter the course ID of the course you would like to edit",
+            description = "\n".join(courses),
             color = discord.Color.fuchsia()
         )
-        embed.title = f"{ctx.author.name} enter the course ID you would like to edit"
-        embed.description = "\n".join(courses)
-        await ctx.send(embed = embed)
-        course_id = await bot.wait_for("message", check=lambda m:course_id_check(m) and user_check(m), timeout=20)
+        await ctx.send(embed=embed)
+        course_id = await bot.wait_for("message", check=lambda m:course_id_check(m) and user_check(m), timeout=30)
         
         embed = discord.Embed(
+            title = "Which column would you like to update",
+            description = "\n".join(schedule_columns),
             color = discord.Color.fuchsia()
         )
-        embed.title = "Which column would you like to update"
-        embed.description = "\n".join(schedule_columns)
         await ctx.send(embed = embed)
-        column_name = await bot.wait_for("message", check=lambda m:column_check(m) and user_check(m), timeout=20)
+        column_name = await bot.wait_for("message", check=lambda m:column_check(m) and user_check(m), timeout=30)
 
         embed = discord.Embed(
+            title = "What is the new column value",
+            description = f"Old column value: {db.get_all_courses_info(ctx.author.id)[courses.index(course_id.content)][column_name.content]}",
             color = discord.Color.fuchsia()
         )
-        embed.title = "What is the new column value"
-        embed.description = f"Old column value: {db.get_all_classes(ctx.author.id)[courses.index(course_id.content)][schedule_columns.index(column_name.content) + 1]}"
         if column_name.content == "course_id":
-            embed.description += "\n\nXXXXNNN Up to 4 capital characters and exactly 3 numbers (i.e. CMSC202)"
+            embed.description += "\n\nXXXXNNN (i.e. CMSC202)"
         elif column_name.content == "days_of_week":
-            embed.description += "\n\nEnter from [MON,TUE,WED,THU,FRI] no duplicates or spaces, in-order (i.e. MONWEDFRI)"
+            embed.description += "\n\nSelect from [MON,TUE,WED,THU,FRI] (i.e. MONWEDFRI)"
         elif column_name.content == "time":
-            embed.description += "\n\nHH:MM(AM/PM)-HH:MM(AM/PM)]"
-        await ctx.send(embed = embed)
-        column_value = await bot.wait_for("message", check=lambda m:column_value_check(m, column_name.content) and user_check(m), timeout=20)
+            embed.description += "\n\nHH:MM(AM/PM)-HH:MM(AM/PM)"
+        await ctx.send(embed=embed)
+        column_value = await bot.wait_for("message", check=lambda m:column_value_check(m, column_name.content) and user_check(m), timeout=30)
 
-        db.update_class(ctx.author.id, course_id.content, column_name.content, column_value.content)
+        db.update_course(ctx.author.id, course_id.content, column_name.content, column_value.content)
         await ctx.send(f"Successfully updated the '{column_name.content}' column with the new value")
     except asyncio.TimeoutError:
         await ctx.send("Sorry, you did not reply in time")

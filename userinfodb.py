@@ -13,12 +13,22 @@ schedulebotdb = mysql.connector.connect(
 )
 cursor = schedulebotdb.cursor()
 
-# check existing user in users table
+"""
+is_duplicate_user
+
+Checks if the user already exists
+in the database
+"""
 def is_duplicate_user(discord_id):
     cursor.execute(f"SELECT * FROM users WHERE discord_id = {discord_id}")
     return len(cursor.fetchall()) > 0
 
-# add user info to users table
+"""
+add_user
+
+Adds a user and their info to the
+database
+"""
 def add_user(user_info):
     if not is_duplicate_user(user_info["discord_id"]):
         cursor.execute(f"INSERT INTO users VALUES('{user_info['name']}', {user_info['discriminator']}, {user_info['discord_id']})")
@@ -27,40 +37,79 @@ def add_user(user_info):
     else:
         return False
 
-# check existing class in schedules table
-def class_exists(discord_id, course_id):
+"""
+course_exists
+
+Checks if the course already exists
+in the database
+"""
+def course_exists(discord_id, course_id):
     cursor.execute(f"SELECT * FROM schedules WHERE discord_id = {discord_id} AND course_id = '{course_id}'")
     return len(cursor.fetchall()) != 0
 
-# add class info to schedules table
-def add_class(discord_id, class_info):
-    if not class_exists(discord_id, class_info["course_id"]):
-        cursor.execute(f"INSERT INTO schedules VALUES({discord_id}, '{class_info['course_id']}', '{class_info['course_name']}', '{class_info['days_of_week']}', '{class_info['time']}', '{class_info['location']}', '{class_info['professor']}')")
+"""
+add_course
+
+Adds a course and its info to the
+database
+"""
+def add_course(discord_id, course_info):
+    if not course_exists(discord_id, course_info["course_id"]):
+        cursor.execute(f"INSERT INTO schedules VALUES({discord_id}, '{course_info['course_id']}', '{course_info['course_name']}', '{course_info['days_of_week']}', '{course_info['time']}', '{course_info['location']}', '{course_info['professor']}')")
         schedulebotdb.commit()
         return True
     else:
         return False
 
-# gets all classes a user has
-def get_all_classes(discord_id):
-    cursor.execute(f"SELECT * FROM schedules WHERE discord_id IN (SELECT discord_id FROM users WHERE discord_id = {discord_id})")
-    return cursor.fetchall()
+"""
+get_all_courses_info
 
-# remove a class from schedules table
-def remove_class(discord_id, course_id):
-    if class_exists(discord_id, course_id):
+Gets all the courses a user has
+and its info
+"""
+def get_all_courses_info(discord_id):
+    courses = []
+    cursor.execute(f"SELECT course_id, course_name, days_of_week, time, location, professor FROM schedules WHERE discord_id IN (SELECT discord_id FROM users WHERE discord_id = {discord_id})")
+    for course in cursor.fetchall():
+        courses.append({
+            "course_id":course[0],
+            "course_name":course[1],
+            "days_of_week":course[2],
+            "time":course[3],
+            "location":course[4],
+            "professor":course[5]
+        })
+    return courses
+
+"""
+remove_course
+
+Removes a course and its info from
+the database
+"""
+def remove_course(discord_id, course_id):
+    if course_exists(discord_id, course_id):
         cursor.execute(f"DELETE FROM schedules WHERE course_id = '{course_id}' AND discord_id = {discord_id}")
         schedulebotdb.commit()
         return True
     else:
         return False
 
-# get schedules table columns
+"""
+get_table_columns
+
+Gets the name of a table's columns
+"""
 def get_table_columns(table_name):
     cursor.execute(f"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'schedulebot' AND TABLE_NAME = '{table_name}' ORDER BY ORDINAL_POSITION")
-    return cursor.fetchall()
+    return cursor.fetchall()[1:]
 
-# update a class entry already existing in schedules table
-def update_class(discord_id, course_id, column_name, column_value):
+"""
+update_course
+
+Updates a single column in an existing
+course
+"""
+def update_course(discord_id, course_id, column_name, column_value):
     cursor.execute(f"UPDATE schedules SET {column_name} = '{column_value}' WHERE discord_id = {discord_id} AND course_id = '{course_id}'")
     schedulebotdb.commit()
