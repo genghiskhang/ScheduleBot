@@ -10,7 +10,7 @@ token = open(Path("assets/") / "token.txt", "r").readline().strip()
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=prefix, intents=intents)
 
-MAX_COURSES = 5
+STARTING_MAX_COURSES = 5
 
 """
 Event
@@ -43,7 +43,7 @@ async def on_member_join(member):
         "name":member.name,
         "discriminator":member.discriminator,
         "discord_id":member.id,
-        "max_courses":MAX_COURSES
+        "max_courses":STARTING_MAX_COURSES
     }
     db.add_user(user_info)
 
@@ -109,7 +109,8 @@ async def add_all_users(ctx):
                 user_info = {
                     "name":member.name,
                     "discriminator":member.discriminator,
-                    "discord_id":member.id
+                    "discord_id":member.id,
+                    "max_courses":STARTING_MAX_COURSES
                 }
                 db.add_user(user_info)
         await ctx.send("All users added successfully")
@@ -124,12 +125,11 @@ Updates a user's max courses
 """
 @bot.command()
 async def update_max_courses(ctx, user:discord.Member):
-
     def user_check(m):
         return ctx.author == m.author
 
     try:
-        await ctx.send(f"What do you want to set the new max courses to")
+        await ctx.send(f"What do you want to set the new max courses to (>= {len(db.get_all_courses_info(user.id))})")
         msg = await bot.wait_for("message", check=user_check, timeout=30)
 
         if db.update_max_courses(user.id, int(msg.content)):
@@ -176,7 +176,7 @@ course to the database
 """
 @bot.command()
 async def add_course(ctx):
-    if len(db.get_all_courses_info(ctx.author.id)) == MAX_COURSES:
+    if len(db.get_all_courses_info(ctx.author.id)) == db.get_max_courses(ctx.author.id):
         await ctx.send("You have reached the max amount of courses you can add\nContact vietcoffee#9511 if you need to increase your max courses")
         return
 
