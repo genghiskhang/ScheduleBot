@@ -9,6 +9,7 @@ prefix = "-"
 token = open(Path("assets/") / "token.txt", "r").readline().strip()
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix=prefix, intents=intents)
+bot.remove_command("help")
 
 STARTING_MAX_COURSES = 5
 
@@ -62,6 +63,24 @@ on_member_remove
 @bot.event
 async def on_member_remove(member):
     pass
+
+"""
+Command
+help
+
+Overrided help function
+"""
+@bot.command()
+async def help(ctx):
+    file = discord.File(Path("assets") / "thumbnail.png")
+    embed = discord.Embed(
+        title = "ScheduleBot Commands",
+        color = discord.Color.green()
+    )
+    embed.set_thumbnail(url="attachment://thumbnail.png")
+    embed.add_field(name="All Users", value="boop\nshow_courses\nadd_course\nremove_course\nupdatae_course\n", inline=False)
+    embed.add_field(name="Admin", value="show_all_members\nadd_all_users\n", inline=False)
+    await ctx.send(file=file, embed=embed)
 
 """
 Command
