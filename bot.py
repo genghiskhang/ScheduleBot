@@ -63,7 +63,7 @@ on_member_remove
 """
 @bot.event
 async def on_member_remove(member):
-    pass
+    db.remove_user(member.id)
 
 """
 Command

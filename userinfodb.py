@@ -38,6 +38,16 @@ def add_user(user_info):
         return False
 
 """
+remove_user
+
+Removes a user and their info from
+the database
+"""
+def remove_user(discord_id):
+    cursor.execute(f"DELETE FROM users WHERE discord_id = {discord_id}")
+    schedulebotdb.commit()
+
+"""
 course_exists
 
 Checks if the course already exists
