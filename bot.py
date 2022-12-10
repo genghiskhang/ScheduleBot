@@ -77,7 +77,7 @@ async def wipe_user_messages_from(ctx, user_id, channel_id, limit):
     if ctx.author.guild_permissions.administrator:
         try:
             await ctx.send("Start processing...")
-            start_time = time.time()
+            start_time = int(time.time())
             channel_name = ""
             for channel in ctx.guild.channels:
                 if channel.id == int(channel_id):
@@ -88,7 +88,8 @@ async def wipe_user_messages_from(ctx, user_id, channel_id, limit):
             async for message in channel.history(limit=int(limit)):
                 if message.author.id == int(user_id):
                     user_message_id.append(message.id)
-            await ctx.send(f"Finished processing {len(user_message_id)} of user's messages (Time: {time.time() - start_time})\nStart deletion...")
+            processing_time = int(time.time() - start_time)
+            await ctx.send(f"Finished processing {len(user_message_id)} of user's messages (Time: {int(processing_time / (60 * 60))}h {int((processing_time % (60 * 60)) / 60)}m {(processing_time % (60 * 60)) % 60}s)\nStart deletion...")
 
             for message_id in user_message_id:
                 try:
@@ -96,8 +97,8 @@ async def wipe_user_messages_from(ctx, user_id, channel_id, limit):
                     await msg.delete()
                 except:
                     pass
-            end_time = time.time()
-            await ctx.send(f"Finished deletion (Time: {end_time - start_time})")
+            end_time = int(time.time() - start_time)
+            await ctx.send(f"Finished deletion (Time: {int(end_time / (60 * 60))}h {int((end_time % (60 * 60)) / 60)}m {(end_time % (60 * 60)) % 60}s)")
             await ctx.send(f"{len(user_message_id)} Messages Deleted ")
         except Exception as e:
             await ctx.send("Something went wrong...")
