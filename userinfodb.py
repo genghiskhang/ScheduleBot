@@ -162,6 +162,6 @@ increment_boops
 Increments a user's boops
 """
 def increment_boops(discord_id):
-    boops = get_boops(discord_id)
+    boops = get_boops(discord_id) + 1
     cursor.execute(f"UPDATE users SET boops = {boops} WHERE discord_id = {discord_id}")
     schedulebotdb.commit()
