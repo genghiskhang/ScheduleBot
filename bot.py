@@ -134,7 +134,7 @@ Boop!
 async def boop(ctx):
     db.increment_boops(ctx.author.id)
     await ctx.send("Boop!")
-    await ctx.send(f"You have booped a total of {db.get_boops(ctx.author.id)}")
+    await ctx.send(f"You have booped a total of {db.get_boops(ctx.author.id)} boops :O")
 
 """
 Command [ADMIN]
