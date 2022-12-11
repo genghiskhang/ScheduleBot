@@ -145,3 +145,23 @@ def update_max_courses(discord_id, new_max):
         return True
     else:
         return False
+
+"""
+get_boops
+
+Gets the total number of times a
+user has booped
+"""
+def get_boops(discord_id):
+    cursor.execute(f"SELECT boops FROM users WHERE discord_id = {discord_id}")
+    return cursor.fetchall()[0][0]
+
+"""
+increment_boops
+
+Increments a user's boops
+"""
+def increment_boops(discord_id):
+    boops = get_boops(discord_id)
+    cursor.execute(f"UPDATE users SET boops = {boops} WHERE discord_id = {discord_id}")
+    schedulebotdb.commit()

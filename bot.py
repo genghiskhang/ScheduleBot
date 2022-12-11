@@ -121,18 +121,20 @@ async def help(ctx):
     )
     embed.set_thumbnail(url="attachment://thumbnail.png")
     embed.add_field(name="All Users", value="boop\nshow_courses\nadd_course\nremove_course\nupdatae_course\n", inline=False)
-    embed.add_field(name="Admin", value="show_all_members\nadd_all_users\nwipe_user_messages_from\n", inline=False)
+    embed.add_field(name="Admin", value="show_all_members\nadd_all_users\nwipe_user_messages_from\ncheck_api_calls\n", inline=False)
     await ctx.send(file=file, embed=embed)
 
 """
 Command
 boop
 
-Used for testing
+Boop!
 """
 @bot.command()
 async def boop(ctx):
+    db.increment_boops(ctx.author.id)
     await ctx.send("Boop!")
+    await ctx.send(f"You have booped a total of {db.get_boops(ctx.author.id)}")
 
 """
 Command [ADMIN]
