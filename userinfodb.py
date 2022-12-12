@@ -31,7 +31,7 @@ database
 """
 def add_user(user_info):
     if not is_duplicate_user(user_info["discord_id"]):
-        cursor.execute(f"INSERT INTO users VALUES('{user_info['name']}', '{user_info['discriminator']}', {user_info['discord_id']}, {user_info['max_courses']})")
+        cursor.execute(f"INSERT INTO users VALUES('{user_info['name']}', '{user_info['discriminator']}', {user_info['discord_id']}, {user_info['max_courses']}, 0)")
         schedulebotdb.commit()
         return True
     else:
