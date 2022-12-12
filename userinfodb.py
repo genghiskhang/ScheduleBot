@@ -48,6 +48,17 @@ def remove_user(discord_id):
     schedulebotdb.commit()
 
 """
+update_user
+
+Updates a user and their info
+"""
+def update_user(user_info):
+    cursor.execute(f"UPDATE users SET name = '{user_info['name']}' WHERE discord_id = {user_info['discord_id']}")
+    schedulebotdb.commit()
+    cursor.execute(f"UPDATE users SET discriminator = {user_info['discriminator']} WHERE discord_id = {user_info['discord_id']}")
+    schedulebotdb.commit()
+
+"""
 course_exists
 
 Checks if the course already exists

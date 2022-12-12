@@ -52,10 +52,19 @@ async def on_member_join(member):
 """
 Event
 on_member_update
+
+Updates the info of the user
+when they change their name
+or discriminator
 """
 @bot.event
-async def on_member_update(member):
-    pass
+async def on_member_update(before, after):
+    user_info = {
+        "name":before.name,
+        "discriminator":before.discriminator,
+        "discord_id":before.id
+    }
+    db.update_user(user_info)
 
 """
 Event
