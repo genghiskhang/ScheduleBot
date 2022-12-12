@@ -76,7 +76,7 @@ database
 """
 def add_course(discord_id, course_info):
     if not course_exists(discord_id, course_info["course_id"]):
-        cursor.execute(f"INSERT INTO schedules VALUES({discord_id}, '{course_info['course_id']}', '{course_info['course_name']}', '{course_info['days_of_week']}', '{course_info['time']}', '{course_info['location']}', '{course_info['professor']}')")
+        cursor.execute(f"INSERT INTO schedules VALUES({discord_id}, '{course_info['course_id']}', '{course_info['course_name']}', {course_info['section_id']}, '{course_info['days_of_week']}', '{course_info['time']}', '{course_info['location']}', '{course_info['professor']}')")
         schedulebotdb.commit()
         return True
     else:
@@ -90,15 +90,16 @@ and its info
 """
 def get_all_courses_info(discord_id):
     courses = []
-    cursor.execute(f"SELECT course_id, course_name, days_of_week, time, location, professor FROM schedules WHERE discord_id IN (SELECT discord_id FROM users WHERE discord_id = {discord_id})")
+    cursor.execute(f"SELECT course_id, course_name, section_id, days_of_week, time, location, professor FROM schedules WHERE discord_id IN (SELECT discord_id FROM users WHERE discord_id = {discord_id})")
     for course in cursor.fetchall():
         courses.append({
             "course_id":course[0],
             "course_name":course[1],
-            "days_of_week":course[2],
-            "time":course[3],
-            "location":course[4],
-            "professor":course[5]
+            "section_id":course[2],
+            "days_of_week":course[3],
+            "time":course[4],
+            "location":course[5],
+            "professor":course[6]
         })
     return courses
 

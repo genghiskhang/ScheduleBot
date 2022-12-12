@@ -232,7 +232,7 @@ async def show_courses(ctx):
     )
     for course_info in db.get_all_courses_info(ctx.author.id):
         embed.add_field(
-            name = f"{course_info['course_id']} - {course_info['course_name']} with {course_info['professor']}",
+            name = f"[{course_info['section_id']}] {course_info['course_id']} - {course_info['course_name']} with {course_info['professor']}",
             value = f"{course_info['days_of_week']}\n{course_info['time']} in {course_info['location']}",
             inline = False
         )
@@ -255,6 +255,7 @@ async def add_course(ctx):
     course_info = {
         "course_id":"",
         "course_name":"",
+        "section_id":"",
         "days_of_week":"",
         "time":"",
         "location":"",
@@ -266,6 +267,9 @@ async def add_course(ctx):
 
     def course_id_check(m):
         return re.search("^[A-Z]{2,4}\d{3}$", m.content) is not None
+
+    def section_id_check(m):
+        return re.search("^\d+$", m.content) is not None
 
     def days_of_week_check(m):
         return re.search("^(MON)?(TUE)?(WED)?(THU)?(FRI)?$", m.content) is not None
@@ -283,6 +287,11 @@ async def add_course(ctx):
         await ctx.send("What is the name of the course?")
         msg = await bot.wait_for("message", check=user_check, timeout=30)
         course_info["course_name"] = msg.content
+
+        # section_id
+        await ctx.send("What is the section ID?\nPositive numbers only")
+        msg = await bot.wait_for("message", check=lambda m:section_id_check(m) and user_check(m), timeout=30)
+        course_info["section_id"] = msg.content
         
         # days_of_week
         full_day = {
@@ -387,6 +396,8 @@ async def update_course(ctx):
     def column_value_check(m, column_name):
         if column_name == "course_id":
             return re.search("^[A-Z]{2,4}\d{3}$", m.content) is not None
+        elif column_name == "section_id":
+            return re.search("^\d+$", m.content) is not None
         elif column_name == "days_of_week":
             return re.search("^(MON)?(TUE)?(WED)?(THU)?(FRI)?$", m.content) is not None
         elif column_name == "time":
@@ -417,6 +428,8 @@ async def update_course(ctx):
         )
         if column_name.content == "course_id":
             embed.description += "\n\nXXXXNNN (i.e. CMSC202)"
+        elif column_name.content == "section_id":
+            embed.description += "\n\nPositive numbers only"
         elif column_name.content == "days_of_week":
             embed.description += "\n\nSelect from [MON,TUE,WED,THU,FRI] (i.e. MONWEDFRI)"
         elif column_name.content == "time":
