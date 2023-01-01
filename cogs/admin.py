@@ -22,9 +22,9 @@ class Admin(commands.Cog):
         if ctx.author.guild_permissions.administrator:
             members = "\n".join([f"{member.name}#{member.discriminator} - {member.id} - is_bot:{member.bot}" for member in ctx.channel.guild.members])
             embed = discord.Embed(
-                title = "Members List",
-                description = members,
-                color = discord.Color.fuchsia()
+                title="Members List",
+                description=members,
+                color=discord.Color.fuchsia()
             )
             await ctx.send(embed=embed)
         else:
@@ -62,19 +62,22 @@ class Admin(commands.Cog):
     """
     @commands.command()
     async def update_max_courses(self, ctx, user:discord.Member):
-        def user_check(m):
-            return ctx.author == m.author
+        if ctx.author.guild_permissions.administrator:
+            def user_check(m):
+                return ctx.author == m.author
 
-        try:
-            await ctx.send(f"What do you want to set the new max courses to (>= {len(db.get_all_courses_info(user.id))})")
-            msg = await self.bot.wait_for("message", check=user_check, timeout=30)
+            try:
+                await ctx.send(f"What do you want to set the new max courses to (>= {len(db.get_all_courses_info(user.id))})")
+                msg = await self.bot.wait_for("message", check=user_check, timeout=30)
 
-            if db.update_max_courses(user.id, int(msg.content)):
-                await ctx.send(f"{user.name}'s max courses set to {msg.content}")
-            else:
-                await ctx.send("Please enter a valid max courses")
-        except asyncio.TimeoutError:
-            await ctx.send("Sorry, you did not reply in time")
+                if db.update_max_courses(user.id, int(msg.content)):
+                    await ctx.send(f"{user.name}'s max courses set to {msg.content}")
+                else:
+                    await ctx.send("Please enter a valid max courses")
+            except asyncio.TimeoutError:
+                await ctx.send("Sorry, you did not reply in time")
+        else:
+            await ctx.send("You do not have permissions to use this command")
 
     """
     Command [ADMIN]

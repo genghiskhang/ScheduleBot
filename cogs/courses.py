@@ -69,16 +69,16 @@ class Courses(commands.Cog):
             return
 
         embed = discord.Embed(
-            title = f"{ctx.author.name}'s Schedule",
-            color = discord.Color.blue()
+            title=f"{ctx.author.name}'s Schedule",
+            color=discord.Color.blue()
         )
         for course_info in db.get_all_courses_info(ctx.author.id):
             embed.add_field(
-                name = f"[{course_info['section_id']}] {course_info['course_id']} - {course_info['course_name']} with {course_info['professor']}",
-                value = f"{course_info['days_of_week']}\n{course_info['time']} in {course_info['location']}",
-                inline = False
+                name=f"[{course_info['section_id']}] {course_info['course_id']} - {course_info['course_name']} with {course_info['professor']}",
+                value=f"{course_info['days_of_week']}\n{course_info['time']} in {course_info['location']}",
+                inline=False
             )
-        await ctx.author.send(embed = embed)
+        await ctx.author.send(embed=embed)
 
     """
     Command
@@ -190,11 +190,11 @@ class Courses(commands.Cog):
             return
 
         embed = discord.Embed(
-            color = discord.Color.fuchsia()
+            color=discord.Color.fuchsia()
         )
         embed.title = f"{ctx.author.name}, enter the course ID you want to remove"
         embed.description = "\n".join(courses)
-        await ctx.send(embed = embed)
+        await ctx.send(embed=embed)
 
         def check(m):
             return m.content in courses and m.author == ctx.author
@@ -247,25 +247,25 @@ class Courses(commands.Cog):
                 return True
         try:
             embed = discord.Embed(
-                title = "Enter the course ID of the course you would like to edit",
-                description = "\n".join(courses),
-                color = discord.Color.fuchsia()
+                title="Enter the course ID of the course you would like to edit",
+                description="\n".join(courses),
+                color=discord.Color.fuchsia()
             )
             await ctx.send(embed=embed)
             course_id = await self.bot.wait_for("message", check=lambda m:course_id_check(m) and user_check(m), timeout=30)
             
             embed = discord.Embed(
-                title = "Which column would you like to update",
-                description = "\n".join(schedule_columns),
-                color = discord.Color.fuchsia()
+                title="Which column would you like to update",
+                description="\n".join(schedule_columns),
+                color=discord.Color.fuchsia()
             )
-            await ctx.send(embed = embed)
+            await ctx.send(embed=embed)
             column_name = await self.bot.wait_for("message", check=lambda m:column_check(m) and user_check(m), timeout=30)
 
             embed = discord.Embed(
-                title = "What is the new column value",
-                description = f"Old column value: {db.get_all_courses_info(ctx.author.id)[courses.index(course_id.content)][column_name.content]}",
-                color = discord.Color.fuchsia()
+                title="What is the new column value",
+                description=f"Old column value: {db.get_all_courses_info(ctx.author.id)[courses.index(course_id.content)][column_name.content]}",
+                color=discord.Color.fuchsia()
             )
             if column_name.content == "course_id":
                 embed.description += "\n\nXXXXNNN (i.e. CMSC202)"

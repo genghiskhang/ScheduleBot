@@ -17,8 +17,8 @@ class Extra(commands.Cog):
     async def help(self, ctx):
         file = discord.File(Path("assets") / "thumbnail2.png")
         embed = discord.Embed(
-            title = "ScheduleBot Commands",
-            color = discord.Color.green()
+            title="ScheduleBot Commands",
+            color=discord.Color.green()
         )
         embed.set_thumbnail(url="attachment://thumbnail2.png")
         embed.add_field(name="All Users", value="boop\nboob\nshow_courses\nadd_course\nremove_course\nupdate_course\n", inline=False)
