@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from pathlib import Path
-import assets.userinfodb as db
+from assets import userinfodb as db
 
 class Extra(commands.Cog):
     def __init__(self, bot):

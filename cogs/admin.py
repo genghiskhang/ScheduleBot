@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 import time
 import asyncio
-import assets.userinfodb as db
+from assets import userinfodb as db
+from assets import botexceptions as be
 
 STARTING_MAX_COURSES = 5
 
@@ -19,7 +20,9 @@ class Admin(commands.Cog):
     """
     @commands.command()
     async def show_all_members(self, ctx):
-        if ctx.author.guild_permissions.administrator:
+        try:
+            if not ctx.author.guild_permissions.administrator:
+                raise be.LackingPermissionsException()
             members = "\n".join([f"{member.name}#{member.discriminator} - {member.id} - is_bot:{member.bot}" for member in ctx.channel.guild.members])
             embed = discord.Embed(
                 title="Members List",
@@ -27,8 +30,8 @@ class Admin(commands.Cog):
                 color=discord.Color.fuchsia()
             )
             await ctx.send(embed=embed)
-        else:
-            await ctx.send("You do not have permissions to use this command")
+        except be.LackingPermissionsException as e:
+            await ctx.send(str(e))
 
     """
     Command [ADMIN]
@@ -40,7 +43,9 @@ class Admin(commands.Cog):
     """
     @commands.command()
     async def add_all_users(self, ctx):
-        if ctx.author.guild_permissions.administrator:
+        try:
+            if not ctx.author.guild_permissions.administrator:
+                raise be.LackingPermissionsException()
             for member in ctx.channel.guild.members:
                 if not member.bot:
                     user_info = {
@@ -51,8 +56,8 @@ class Admin(commands.Cog):
                     }
                     db.add_user(user_info)
             await ctx.send("All users added successfully")
-        else:
-            await ctx.send("You do not have permissions to use this command")
+        except be.LackingPermissionsException as e:
+            await ctx.send(str(e))
 
     """
     Command [ADMIN]
@@ -62,7 +67,10 @@ class Admin(commands.Cog):
     """
     @commands.command()
     async def update_max_courses(self, ctx, user:discord.Member):
-        if ctx.author.guild_permissions.administrator:
+        try:
+            if not ctx.author.guild_permissions.administrator:
+                raise be.LackingPermissionsException()
+
             def user_check(m):
                 return ctx.author == m.author
 
@@ -70,14 +78,14 @@ class Admin(commands.Cog):
                 await ctx.send(f"What do you want to set the new max courses to (>= {len(db.get_all_courses_info(user.id))})")
                 msg = await self.bot.wait_for("message", check=user_check, timeout=30)
 
-                if db.update_max_courses(user.id, int(msg.content)):
-                    await ctx.send(f"{user.name}'s max courses set to {msg.content}")
-                else:
-                    await ctx.send("Please enter a valid max courses")
+                db.update_max_courses(user.id, int(msg.content))
+                await ctx.send(f"{user.name}'s max courses set to {msg.content}")
+            except be.InvalidMaxCoursesException as e:
+                await ctx.send(str(e))
             except asyncio.TimeoutError:
                 await ctx.send("Sorry, you did not reply in time")
-        else:
-            await ctx.send("You do not have permissions to use this command")
+        except be.LackingPermissionsException as e:
+            await ctx.send(str(e))
 
     """
     Command [ADMIN]
@@ -89,7 +97,9 @@ class Admin(commands.Cog):
     """
     @commands.command()
     async def wipe_user_messages_from(self, ctx, user_id, channel_id, limit):
-        if ctx.author.guild_permissions.administrator:
+        try:
+            if not ctx.author.guild_permissions.administrator:
+                raise be.LackingPermissionsException()
             try:
                 await ctx.send("Start processing...")
                 start_time = int(time.time())
@@ -118,8 +128,8 @@ class Admin(commands.Cog):
             except Exception as e:
                 await ctx.send("Something went wrong...")
                 await ctx.send(f"Error: {e}")
-        else:
-            await ctx.send("You do not have permissions to use this command")
+        except be.LackingPermissionsException as e:
+            await ctx.send(str(e))
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))

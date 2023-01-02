@@ -1,6 +1,7 @@
 import mysql.connector
 import json
 from pathlib import Path
+from assets import botexceptions as be
 
 with open(Path("assets/") / "dbcredentials.json") as file:
     login = json.load(file)
@@ -15,10 +16,12 @@ def is_duplicate_user(discord_id):
     schedulebotdb = mysql.connector.connect(host=login["host"], user=login["user"], password=login["password"], database=login["database"])
     cursor = schedulebotdb.cursor()
     cursor.execute(f"SELECT * FROM users WHERE discord_id = {discord_id}")
-    is_duplicate = len(cursor.fetchall()) != 0
+    if len(cursor.fetchall()) != 0:
+        schedulebotdb.close()
+        cursor.close()
+        raise be.UserExistsException()
     schedulebotdb.close()
     cursor.close()
-    return is_duplicate
 
 """
 add_user
@@ -29,16 +32,11 @@ database
 def add_user(user_info):
     schedulebotdb = mysql.connector.connect(host=login["host"], user=login["user"], password=login["password"], database=login["database"])
     cursor = schedulebotdb.cursor()
-    if not is_duplicate_user(user_info["discord_id"]):
-        cursor.execute(f"INSERT INTO users VALUES('{user_info['name']}', '{user_info['discriminator']}', {user_info['discord_id']}, {user_info['max_courses']}, 0)")
-        schedulebotdb.commit()
-        schedulebotdb.close()
-        cursor.close()
-        return True
-    else:
-        schedulebotdb.close()
-        cursor.close()
-        return False
+    is_duplicate_user(user_info["discord_id"])
+    cursor.execute(f"INSERT INTO users VALUES('{user_info['name']}', '{user_info['discriminator']}', {user_info['discord_id']}, {user_info['max_courses']}, 0)")
+    schedulebotdb.commit()
+    schedulebotdb.close()
+    cursor.close()
 
 """
 remove_user
@@ -62,7 +60,7 @@ Updates a user and their info
 def update_user(user_info):
     schedulebotdb = mysql.connector.connect(host=login["host"], user=login["user"], password=login["password"], database=login["database"])
     cursor = schedulebotdb.cursor()
-    cursor.execute(f"UPDATE users SET name = '{user_info['name']}', discriminator = {user_info['discriminator']} WHERE discord_id = {user_info['discord_id']}")
+    cursor.execute(f"UPDATE users SET name = '{user_info['name']}', discriminator = '{user_info['discriminator']}' WHERE discord_id = {user_info['discord_id']}")
     schedulebotdb.commit()
     schedulebotdb.close()
     cursor.close()
@@ -77,10 +75,12 @@ def course_exists(discord_id, course_id):
     schedulebotdb = mysql.connector.connect(host=login["host"], user=login["user"], password=login["password"], database=login["database"])
     cursor = schedulebotdb.cursor()
     cursor.execute(f"SELECT * FROM schedules WHERE discord_id = {discord_id} AND course_id = '{course_id}'")
-    exists = len(cursor.fetchall()) != 0
+    if len(cursor.fetchall()) != 0:
+        schedulebotdb.close()
+        cursor.close()
+        raise be.CourseExistsException()
     schedulebotdb.close()
     cursor.close()
-    return exists
 
 """
 add_course
@@ -91,16 +91,11 @@ database
 def add_course(discord_id, course_info):
     schedulebotdb = mysql.connector.connect(host=login["host"], user=login["user"], password=login["password"], database=login["database"])
     cursor = schedulebotdb.cursor()
-    if not course_exists(discord_id, course_info["course_id"]):
-        cursor.execute(f"INSERT INTO schedules VALUES({discord_id}, '{course_info['course_id']}', '{course_info['course_name']}', {course_info['section_id']}, '{course_info['days_of_week']}', '{course_info['time']}', '{course_info['location']}', '{course_info['professor']}')")
-        schedulebotdb.commit()
-        schedulebotdb.close()
-        cursor.close()
-        return True
-    else:
-        schedulebotdb.close()
-        cursor.close()
-        return False
+    course_exists(discord_id, course_info["course_id"])
+    cursor.execute(f"INSERT INTO schedules VALUES({discord_id}, '{course_info['course_id']}', '{course_info['course_name']}', {course_info['section_id']}, '{course_info['days_of_week']}', '{course_info['time']}', '{course_info['location']}', '{course_info['professor']}')")
+    schedulebotdb.commit()
+    schedulebotdb.close()
+    cursor.close()
 
 """
 get_all_courses_info
@@ -136,16 +131,10 @@ the database
 def remove_course(discord_id, course_id):
     schedulebotdb = mysql.connector.connect(host=login["host"], user=login["user"], password=login["password"], database=login["database"])
     cursor = schedulebotdb.cursor()
-    if course_exists(discord_id, course_id):
-        cursor.execute(f"DELETE FROM schedules WHERE course_id = '{course_id}' AND discord_id = {discord_id}")
-        schedulebotdb.commit()
-        schedulebotdb.close()
-        cursor.close()
-        return True
-    else:
-        schedulebotdb.close()
-        cursor.close()
-        return False
+    cursor.execute(f"DELETE FROM schedules WHERE course_id = '{course_id}' AND discord_id = {discord_id}")
+    schedulebotdb.commit()
+    schedulebotdb.close()
+    cursor.close()
 
 """
 get_table_columns
@@ -197,16 +186,14 @@ Updates a user's max courses
 def update_max_courses(discord_id, new_max):
     schedulebotdb = mysql.connector.connect(host=login["host"], user=login["user"], password=login["password"], database=login["database"])
     cursor = schedulebotdb.cursor()
-    if new_max >= len(get_all_courses_info(discord_id)):
-        cursor.execute(f"UPDATE users SET max_courses = {new_max} WHERE discord_id = {discord_id}")
-        schedulebotdb.commit()
+    if new_max < len(get_all_courses_info(discord_id)):
         schedulebotdb.close()
         cursor.close()
-        return True
-    else:
-        schedulebotdb.close()
-        cursor.close()
-        return False
+        raise be.InvalidMaxCoursesException()
+    cursor.execute(f"UPDATE users SET max_courses = {new_max} WHERE discord_id = {discord_id}")
+    schedulebotdb.commit()
+    schedulebotdb.close()
+    cursor.close()
 
 """
 get_boops
