@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import time
 import asyncio
-import userinfodb as db
+import assets.userinfodb as db
 
 STARTING_MAX_COURSES = 5
 

@@ -5,28 +5,6 @@ from pathlib import Path
 with open(Path("assets/") / "dbcredentials.json") as file:
     login = json.load(file)
 
-# """
-# connect
-
-# Set up connection to MySQL database
-# and create the cursor
-# """
-# def connect():
-#     global schedulebotdb, cursor
-#     schedulebotdb = mysql.connector.connect(host=login["host"], user=login["user"], password=login["password"], database=login["database"])
-#     cursor = schedulebotdb.cursor()
-
-# """
-# disconnect
-
-# Close the connection to the MySQL
-# database and close the cursor
-# """
-# def disconnect():
-#     global schedulebotdb, cursor
-#     schedulebotdb.close()
-#     cursor.close()
-
 """
 is_duplicate_user
 
