@@ -21,7 +21,7 @@ class Extra(commands.Cog):
             color=discord.Color.green()
         )
         embed.set_thumbnail(url="attachment://thumbnail2.png")
-        embed.add_field(name="All Users", value="boop\nboob\nshow_courses\nadd_course\nremove_course\nupdate_course\n", inline=False)
+        embed.add_field(name="All Users", value="boop\nboob\nshow_courses\nview_user_courses\nadd_course\nremove_course\nupdate_course\n", inline=False)
         embed.add_field(name="Admin", value="show_all_members\nadd_all_users\nupdate_max_courses\nwipe_user_messages_from\n", inline=False)
         await ctx.send(file=file, embed=embed)
 

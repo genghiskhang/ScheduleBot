@@ -283,5 +283,30 @@ class Courses(commands.Cog):
         except asyncio.TimeoutError:
             await ctx.send("Sorry, you did not reply in time")
 
+    """
+    view_user_courses
+
+    Displays another user's courses
+    """
+    @commands.command()
+    async def view_user_courses(self, ctx, user:discord.Member):
+        courses = [course_info["course_id"] for course_info in db.get_all_courses_info(user.id)]
+
+        if not courses:
+            await ctx.send("You have no courses in your schedule")
+            return
+
+        embed = discord.Embed(
+            title=f"{user.name}'s Schedule",
+            color=discord.Color.blue()
+        )
+        for course_info in db.get_all_courses_info(user.id):
+            embed.add_field(
+                name=f"[{course_info['section_id']}] {course_info['course_id']} - {course_info['course_name']} with {course_info['professor']}",
+                value=f"{course_info['days_of_week']}\n{course_info['time']} in {course_info['location']}",
+                inline=False
+            )
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(Courses(bot))
